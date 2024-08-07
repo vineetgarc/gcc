@@ -2453,7 +2453,7 @@ model_excess_cost (rtx_insn *insn, bool print_p)
     }
 
   if (print_p)
-    fprintf (sched_dump, "\n");
+    fprintf (sched_dump, " ECC %d\n", cost);
 
   return cost;
 }
@@ -2485,21 +2485,9 @@ model_dump_pressure_points (struct model_pressure_group *group)
 static void
 model_set_excess_costs (rtx_insn **insns, int count)
 {
-  int i, cost, priority_base, priority;
-  bool print_p;
+  int i, cost;
+  bool print_p = false;
 
-  /* Record the baseECC value for each instruction in the model schedule,
-     except that negative costs are converted to zero ones now rather than
-     later.  Do not assign a cost to debug instructions, since they must
-     not change code-generation decisions.  Experiments suggest we also
-     get better results by not assigning a cost to instructions from
-     a different block.
-
-     Set PRIORITY_BASE to baseP in the block comment above.  This is the
-     maximum priority of the "cheap" instructions, which should always
-     include the next model instruction.  */
-  priority_base = 0;
-  print_p = false;
   for (i = 0; i < count; i++)
     if (INSN_MODEL_INDEX (insns[i]))
       {
@@ -2512,29 +2500,10 @@ model_set_excess_costs (rtx_insn **insns, int count)
 	    print_p = true;
 	  }
 	cost = model_excess_cost (insns[i], print_p);
-	if (cost <= 0)
-	  {
-	    priority = INSN_PRIORITY (insns[i]) - insn_delay (insns[i]) - cost;
-	    priority_base = MAX (priority_base, priority);
-	    cost = 0;
-	  }
 	INSN_REG_PRESSURE_EXCESS_COST_CHANGE (insns[i]) = cost;
       }
   if (print_p)
     fprintf (sched_dump, MODEL_BAR);
-
-  /* Use MAX (baseECC, 0) and baseP to calculcate ECC for each
-     instruction.  */
-  for (i = 0; i < count; i++)
-    {
-      cost = INSN_REG_PRESSURE_EXCESS_COST_CHANGE (insns[i]);
-      priority = INSN_PRIORITY (insns[i]) - insn_delay (insns[i]);
-      if (cost > 0 && priority > priority_base)
-	{
-	  cost += priority_base - priority;
-	  INSN_REG_PRESSURE_EXCESS_COST_CHANGE (insns[i]) = MAX (cost, 0);
-	}
-    }
 }
 
 
