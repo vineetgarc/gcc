@@ -2398,12 +2398,18 @@ model_excess_group_cost (struct model_pressure_group *group,
   int pressure, cl;
 
   cl = ira_pressure_classes[pci];
-  if (delta < 0 && point >= group->limits[pci].point)
+
+  if (delta < 0)
+  {
+    if (point >= group->limits[pci].point)
     {
       pressure = MAX (group->limits[pci].orig_pressure,
 		      curr_reg_pressure[cl] + delta);
       return -model_spill_cost (cl, pressure, curr_reg_pressure[cl]);
     }
+    else
+      return delta;
+  }
 
   if (delta > 0)
     {
