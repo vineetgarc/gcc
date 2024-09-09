@@ -1862,6 +1862,9 @@ struct model_insn_info {
 
   /* The number of predecessor nodes that must still be scheduled.  */
   int unscheduled_preds;
+  int unscheduled_true_preds;
+
+  bool preds_already_prom;
 };
 
 /* Information about the pressure limit for a particular register class.
@@ -3490,7 +3493,20 @@ model_analyze_insns (void)
 	insn->old_queue = QUEUE_INDEX (iter);
 	QUEUE_INDEX (iter) = QUEUE_NOWHERE;
 
-	insn->unscheduled_preds = dep_list_size (iter, SD_LIST_HARD_BACK);
+	insn->preds_already_prom = false;
+
+	insn->unscheduled_preds = 0;
+	insn->unscheduled_true_preds = 0;
+	FOR_EACH_DEP (iter, SD_LIST_HARD_BACK, sd_it, dep)
+	  {
+	    if (DEBUG_INSN_P (DEP_PRO (dep)))
+	      continue;
+	    insn->unscheduled_preds++;
+	    if (DEP_TYPE (dep) == REG_DEP_TRUE)
+	      insn->unscheduled_true_preds++;
+	  }
+	gcc_assert(insn->unscheduled_preds == dep_list_size (iter, SD_LIST_HARD_BACK));
+
 	if (insn->unscheduled_preds == 0)
 	  model_add_to_worklist (insn, NULL, model_worklist);
 
@@ -3622,6 +3638,9 @@ model_add_successors_to_worklist (struct model_insn_info *insn)
 	{
 	  con->unscheduled_preds--;
 
+	  if (DEP_TYPE (dep) == REG_DEP_TRUE)
+	    con->unscheduled_true_preds--;
+
 	  /* Update the depth field of each true-dependent successor.
 	     Increasing the depth gives them a higher priority than
 	     before.  */
@@ -3672,13 +3691,23 @@ model_promote_predecessors (struct model_insn_info *insn)
 	  pro = MODEL_INSN_INFO (DEP_PRO (dep));
 	  /* The first test is to ignore debug instructions, and instructions
 	     from other blocks.  */
-	  if (pro->insn
-	      && pro->model_priority != model_next_priority
-	      && QUEUE_INDEX (pro->insn) != QUEUE_SCHEDULED)
+	  if (!pro->insn)
+	    continue;
+
+	  bool true_dep = (DEP_TYPE (dep) == REG_DEP_TRUE);
+
+	  if (QUEUE_INDEX (pro->insn) != QUEUE_SCHEDULED
+	      && ((true_dep && (pro->model_priority < model_next_priority))
+		  || (!true_dep && (pro->model_priority < (model_next_priority - 1)))))
 	    {
-	      pro->model_priority = model_next_priority;
+	      if (DEP_TYPE (dep) == REG_DEP_TRUE)
+		pro->model_priority = model_next_priority;
+	      else
+		pro->model_priority = model_next_priority - 1;
+
 	      if (sched_verbose >= 7)
-		fprintf (sched_dump, " %d", INSN_UID (pro->insn));
+		fprintf (sched_dump, " %d=%d", INSN_UID (pro->insn),
+			 pro->model_priority);
 	      if (QUEUE_INDEX (pro->insn) == QUEUE_READY)
 		{
 		  /* PRO is already in the worklist, but it now has
@@ -3687,7 +3716,7 @@ model_promote_predecessors (struct model_insn_info *insn)
 		  model_remove_from_worklist (pro);
 		  model_add_to_worklist (pro, NULL, model_worklist);
 		}
-	      else
+	      else if (true_dep)
 		{
 		  /* PRO isn't in the worklist.  Recursively process
 		     its predecessors until we find one that is.  */
@@ -3701,9 +3730,13 @@ model_promote_predecessors (struct model_insn_info *insn)
       insn = first;
       first = insn->next;
     }
-  if (sched_verbose >= 7)
-    fprintf (sched_dump, " = %d\n", model_next_priority);
+  if (insn->unscheduled_true_preds == 0 && QUEUE_INDEX (insn->insn) == QUEUE_NOWHERE)
+    {
+      model_add_to_worklist (insn, NULL, model_worklist);
+    }
   model_next_priority++;
+  if (sched_verbose >= 7)
+    fprintf (sched_dump, "  NEXT prio = %d\n", model_next_priority);
 }
 
 /* Pick one instruction from model_worklist and process it.  */
@@ -3721,10 +3754,10 @@ model_choose_insn (void)
       count = param_max_sched_ready_insns;
       while (count > 0 && insn)
 	{
-	  fprintf (sched_dump, ";;\t+---   %d [%d, %d, %d, %d]\n",
+	  fprintf (sched_dump, ";;\t+---   %d [%d, %d, %d, %d][%d]\n",
 		   INSN_UID (insn->insn), insn->model_priority,
 		   insn->depth + insn->alap, insn->depth,
-		   INSN_PRIORITY (insn->insn));
+		   INSN_PRIORITY (insn->insn), insn->unscheduled_preds);
 	  count--;
 	  insn = insn->next;
 	}
@@ -3785,7 +3818,7 @@ model_choose_insn (void)
 	fprintf (sched_dump, ";;\t+--- promoting insn %d, which is ready\n",
 		 INSN_UID (insn->insn));
     }
-  if (insn->unscheduled_preds)
+  if (insn->unscheduled_true_preds)
     /* INSN isn't yet ready to issue.  Give all its predecessors the
        highest priority.  */
     model_promote_predecessors (insn);
@@ -3818,11 +3851,11 @@ model_reset_queue_indices (void)
    to sched_dump.  */
 
 static void
-model_dump_pressure_summary (void)
+model_dump_pressure_summary (basic_block bb)
 {
   int pci, cl;
 
-  fprintf (sched_dump, ";; Pressure summary:");
+  fprintf (sched_dump, ";; Pressure summary (bb %d):", bb->index);
   for (pci = 0; pci < ira_pressure_classes_num; pci++)
     {
       cl = ira_pressure_classes[pci];
@@ -3861,7 +3894,7 @@ model_start_schedule (basic_block bb)
   model_curr_point = 0;
   initiate_reg_pressure_info (df_get_live_in (bb));
   if (sched_verbose >= 1)
-    model_dump_pressure_summary ();
+    model_dump_pressure_summary (bb);
 }
 
 /* Free the information associated with GROUP.  */
