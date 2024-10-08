@@ -3656,18 +3656,6 @@ model_promote_predecessors (struct model_insn_info *insn)
   struct model_insn_info *pro, *first;
   sd_iterator_def sd_it;
   dep_t dep;
-  int failsafe1_count = 0;
-  static int failsafe2_insn, failsafe2_count;
-
-  if (failsafe2_insn == insn->insn->u2.insn_uid)
-    {
-      gcc_assert(failsafe2_count++ < 1000);
-    }
-  else
-    {
-       failsafe2_insn = insn->insn->u2.insn_uid;
-       failsafe2_count = 0;
-    }
 
   if (sched_verbose >= 7)
     fprintf (sched_dump, ";;\t+--- priority of %d = %d, priority of",
@@ -3708,7 +3696,6 @@ model_promote_predecessors (struct model_insn_info *insn)
 		}
 	    }
 	}
-      gcc_assert(++failsafe1_count < 10000);
       if (!first)
 	break;
       insn = first;
