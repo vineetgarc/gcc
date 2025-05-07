@@ -12193,6 +12193,8 @@ riscv_frm_mode_needed (rtx_insn *cur_insn, int code)
 	    the emit mode set.
        */
     mode = riscv_frm_adjust_mode_after_call (cur_insn, mode);
+  else if (riscv_static_frm_mode_p (mode))
+    STATIC_FRM_P (cfun) = true;
 
   return mode;
 }
@@ -12317,18 +12319,6 @@ vxrm_unknown_p (rtx_insn *insn)
   return false;
 }
 
-/* Return TRUE that an insn is unknown dynamic for FRM.  */
-
-static bool
-frm_unknown_dynamic_p (rtx_insn *insn)
-{
-  /* Return true if there is a definition of FRM.  */
-  if (reg_set_p (gen_rtx_REG (SImode, FRM_REGNUM), insn))
-    return true;
-
-  return false;
-}
-
 /* Return the mode that an insn results in for VXRM.  */
 
 static int
@@ -12346,29 +12336,8 @@ riscv_vxrm_mode_after (rtx_insn *insn, int mode)
     return mode;
 }
 
-/* Return the mode that an insn results in for FRM.  */
-
-static int
-riscv_frm_mode_after (rtx_insn *insn, int mode)
-{
-  STATIC_FRM_P (cfun) = STATIC_FRM_P (cfun) || riscv_static_frm_mode_p (mode);
-
-  if (CALL_P (insn))
-    return mode;
-
-  if (frm_unknown_dynamic_p (insn))
-    return riscv_vector::FRM_DYN;
-
-  if (recog_memoized (insn) < 0)
-    return mode;
-
-  if (reg_mentioned_p (gen_rtx_REG (SImode, FRM_REGNUM), PATTERN (insn)))
-    return get_attr_frm_mode (insn);
-  else
-    return mode;
-}
-
-/* Return the mode that an insn results in.  */
+/* Implement TARGET_MODE_AFTER.
+   Return the mode that an insn results in.  */
 
 static int
 riscv_mode_after (int entity, int mode, rtx_insn *insn, HARD_REG_SET)
@@ -12377,8 +12346,10 @@ riscv_mode_after (int entity, int mode, rtx_insn *insn, HARD_REG_SET)
     {
     case RISCV_VXRM:
       return riscv_vxrm_mode_after (insn, mode);
+
+    /* FRM state machine doesn't need after insn handling.  */
     case RISCV_FRM:
-      return riscv_frm_mode_after (insn, mode);
+      return mode;
     default:
       gcc_unreachable ();
     }
