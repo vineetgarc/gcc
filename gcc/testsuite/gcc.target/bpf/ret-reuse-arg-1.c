@@ -12,3 +12,10 @@ void foo () {
 
 /* { dg-final { scan-assembler-not {r1 = r0} } } */
 /* { dg-final { scan-assembler-times {w1 = w0} 1 } } */
+
+short ret_short ();
+void arg_short (short);
+
+void bar () {
+   arg_short(ret_short ());
+}

@@ -13,6 +13,4 @@ foo (char a, short b, int c, unsigned long d)
   return x + y + z + w;
 }
 
-/* { dg-final { scan-assembler {r. = \(s8\) r.\n} } } */
-/* { dg-final { scan-assembler {r. = \(s16\) r.\n} } } */
-/* { dg-final { scan-assembler {r. = \(s32\) r.\n} } } */
+/* { dg-final { scan-assembler-times {r. = \(s32\) w.\n} 3 } } */

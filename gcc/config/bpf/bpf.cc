@@ -292,6 +292,13 @@ bpf_file_end (void)
 #undef TARGET_ASM_FILE_END
 #define TARGET_ASM_FILE_END bpf_file_end
 
+/* Caller-side promotion of 8/16/32-bit args and result.
+   Semantics as implemented in PROMOTE_MODE macro.  */
+
+#undef TARGET_PROMOTE_FUNCTION_MODE
+#define TARGET_PROMOTE_FUNCTION_MODE \
+  default_promote_function_mode_always_promote
+
 /* Return an RTX representing the place where a function returns or
    receives a value of data type RET_TYPE, a tree node representing a
    data type.  */
@@ -299,13 +306,13 @@ bpf_file_end (void)
 static rtx
 bpf_function_value (const_tree ret_type,
 		    const_tree fntype_or_decl,
-		    bool outgoing ATTRIBUTE_UNUSED)
+		    bool outgoing)
 {
-  enum machine_mode mode;
-  int unsignedp;
+  enum machine_mode mode = TYPE_MODE (ret_type);
+  int unsignedp = TYPE_UNSIGNED (ret_type);
 
-  mode = TYPE_MODE (ret_type);
-  if (INTEGRAL_TYPE_P (ret_type))
+  /* don't promote return values on callee side.  */
+  if (outgoing && INTEGRAL_TYPE_P (ret_type))
     mode = promote_function_mode (ret_type, mode, &unsignedp,
 				  fntype_or_decl, 1);
 
