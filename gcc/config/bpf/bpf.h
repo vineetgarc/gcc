@@ -49,8 +49,8 @@
   do						\
     {						\
       if (GET_MODE_CLASS (M) == MODE_INT	\
-	  && GET_MODE_SIZE (M) < 8)		\
-	M = DImode;				\
+	  && GET_MODE_SIZE (M) < GET_MODE_SIZE (SImode))	\
+	M = SImode;				\
     } while (0)
 
 /* Align argument parameters on the stack to 64-bit, at a minimum.  */
