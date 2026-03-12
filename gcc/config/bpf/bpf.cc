@@ -297,7 +297,7 @@ bpf_file_end (void)
 
 #undef TARGET_PROMOTE_FUNCTION_MODE
 #define TARGET_PROMOTE_FUNCTION_MODE \
-  default_promote_function_mode_always_promote
+  default_promote_function_mode_sign_extend
 
 /* Return an RTX representing the place where a function returns or
    receives a value of data type RET_TYPE, a tree node representing a
@@ -306,12 +306,12 @@ bpf_file_end (void)
 static rtx
 bpf_function_value (const_tree ret_type,
 		    const_tree fntype_or_decl,
-		    bool outgoing ATTRIBUTE_UNUSED)
+		    bool outgoing)
 {
   enum machine_mode mode = TYPE_MODE (ret_type);
   int unsignedp = TYPE_UNSIGNED (ret_type);
 
-  if (INTEGRAL_TYPE_P (ret_type))
+  if (outgoing && INTEGRAL_TYPE_P (ret_type))
     mode = promote_function_mode (ret_type, mode, &unsignedp,
 				  fntype_or_decl, 1);
 
