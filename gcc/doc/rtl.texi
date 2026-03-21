@@ -854,15 +854,15 @@ extended some other way via the @code{ptr_extend} instruction.
 Stored in the @code{unchanging}
 field and @code{volatil} field, printed as @samp{/u} and @samp{/v}.
 This macro may only be used to get the value it may not be used to change
-the value.  Use @code{SUBREG_PROMOTED_UNSIGNED_SET} to change the value.
+the value.  Use @code{SUBREG_PROMOTED_SET} to change the value.
 
-@findex SUBREG_PROMOTED_UNSIGNED_SET
+@findex SUBREG_PROMOTED_SET
 @cindex @code{subreg} and @samp{/u}
 @cindex @code{unchanging}, in @code{subreg}
 @cindex @code{volatil}, in @code{subreg}
-@item SUBREG_PROMOTED_UNSIGNED_SET (@var{x})
+@item SUBREG_PROMOTED_SET (@var{x}, @var{signedp)
 Set the @code{unchanging} and @code{volatil} fields in a @code{subreg}
-to reflect zero, sign, or other extension.  If @code{volatil} is
+to reflect zero or sign extension.  If @code{volatil} is
 zero, then @code{unchanging} as nonzero means zero extension and as
 zero means sign extension.  If @code{volatil} is nonzero then some
 other type of extension was done via the @code{ptr_extend} instruction.
