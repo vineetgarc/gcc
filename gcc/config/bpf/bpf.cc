@@ -309,11 +309,6 @@ bpf_function_value (const_tree ret_type,
 		    bool outgoing)
 {
   enum machine_mode mode = TYPE_MODE (ret_type);
-  int unsignedp = TYPE_UNSIGNED (ret_type);
-
-  if (outgoing && INTEGRAL_TYPE_P (ret_type))
-    mode = promote_function_mode (ret_type, mode, &unsignedp,
-				  fntype_or_decl, 1);
 
   return gen_rtx_REG (mode, BPF_R0);
 }
