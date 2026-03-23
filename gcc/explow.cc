@@ -834,8 +834,8 @@ copy_to_suggested_reg (rtx x, rtx target, machine_mode mode)
    PUNSIGNEDP points to the signedness of the type and may be adjusted
    to show what signedness to use on extension operations.
 
-   FOR_RETURN is nonzero if the caller is promoting the return value
-   of FNDECL, else it is for promoting args.  */
+   FOR_RETURN is 1 if the caller is promoting the return value of
+   FUNTYPE, 0 if promoting args, 2 if ??? */
 
 machine_mode
 promote_function_mode (const_tree type, machine_mode mode, int *punsignedp,
