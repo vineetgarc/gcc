@@ -389,11 +389,11 @@
         (match_operand:MM 1 "mov_src_operand"      " q,rIc,BC,r,I"))]
   ""
   "@
-   *return bpf_output_move (operands, \"{ldx<mop>\t%0,%1|%0 = *(<smop> *) %1}\");
+   *return bpf_output_move (operands, \"{ldx<mop>\t%0,%1|%w0 = *(<smop> *) %w1}\");
    *return bpf_output_move (operands, \"{mov\t%0,%1|%w0 = %w1}\");
    *return bpf_output_move (operands, \"{lddw\t%0,%1|%0 = %1 ll}\");
-   *return bpf_output_move (operands, \"{stx<mop>\t%0,%1|*(<smop> *) %0 = %1}\");
-   *return bpf_output_move (operands, \"{st<mop>\t%0,%1|*(<smop> *) %0 = %1}\");"
+   *return bpf_output_move (operands, \"{stx<mop>\t%0,%1|*(<smop> *) %w0 = %w1}\");
+   *return bpf_output_move (operands, \"{st<mop>\t%0,%1|*(<smop> *) %w0 = %w1}\");"
 [(set_attr "type" "ldx,alu,alu,stx,st")])
 
 ;;;; Shifts
