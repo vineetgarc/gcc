@@ -378,13 +378,19 @@
     operands[1] = force_reg (<MM:MODE>mode, operands[1]);
 }")
 
+;; Note: In the asm templates below, only r->r/mov alternative has 'w' reg
+;; specifer, so SImode regs emitted as wN. Rest just emit rN regs.
+;; Technically the rest of mem forms with "q" src/dst can take 'w' except
+;; that the encodings are same, e.g.
+;;         *(u32 *) (r9+0) = r5 vs. *(u32 *) (r9+0) = w5
+
 (define_insn "*mov<MM:mode>"
   [(set (match_operand:MM 0 "nonimmediate_operand" "=r,  r, r,q,q")
         (match_operand:MM 1 "mov_src_operand"      " q,rIc,BC,r,I"))]
   ""
   "@
    *return bpf_output_move (operands, \"{ldx<mop>\t%0,%1|%0 = *(<smop> *) %1}\");
-   *return bpf_output_move (operands, \"{mov\t%0,%1|%0 = %1}\");
+   *return bpf_output_move (operands, \"{mov\t%0,%1|%w0 = %w1}\");
    *return bpf_output_move (operands, \"{lddw\t%0,%1|%0 = %1 ll}\");
    *return bpf_output_move (operands, \"{stx<mop>\t%0,%1|*(<smop> *) %0 = %1}\");
    *return bpf_output_move (operands, \"{st<mop>\t%0,%1|*(<smop> *) %0 = %1}\");"
