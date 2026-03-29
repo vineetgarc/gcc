@@ -38,12 +38,12 @@ int bar_func (struct T *t)
 
 /* { dg-final { scan-assembler-times "btfext-lineinfo\.c.0\"\[\t \]+\[^\n\]*btf_aux_string" 1 } } */
 /* { dg-final { scan-assembler-times "4byte\[\t \]+\.LFB.\[\t \]+# insn_label" 2 } } */
-/* { dg-final { scan-assembler-times "4byte\[\t \]+LI.\[\t \]+# insn_label" 6 } } */
+/* { dg-final { scan-assembler-times "4byte\[\t \]+LI.\[\t \]+# insn_label" 8 } } */
 
-/* { dg-final { scan-assembler-times "# \\(line, col\\)" 8 } } */
+/* { dg-final { scan-assembler-times "# \\(line, col\\)" 10 } } */
 /* { dg-final { scan-assembler-times "# \\(line, col\\) \\(18, 5\\)" 1 } } */
-/* { dg-final { scan-assembler-times "# \\(line, col\\) \\(20, 10\\)" 1 } } */
-/* { dg-final { scan-assembler-times "# \\(line, col\\) \\(21, 18\\)" 1 } } */
+/* { dg-final { scan-assembler-times "# \\(line, col\\) \\(20, 10\\)" 2 } } */
+/* { dg-final { scan-assembler-times "# \\(line, col\\) \\(21, 18\\)" 2 } } */
 /* { dg-final { scan-assembler-times "# \\(line, col\\) \\(22, 1\\)" 1 } } */
 /* { dg-final { scan-assembler-times "# \\(line, col\\) \\(25, 5\\)" 1 } } */
 /* { dg-final { scan-assembler-times "# \\(line, col\\) \\(28, 7\\)" 1 } } */
