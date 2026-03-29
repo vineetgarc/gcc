@@ -43,14 +43,13 @@
 #define BITS_PER_WORD 64
 #define UNITS_PER_WORD 8
 
-/* When storing an integer whose size is less than 64-bit in a
-   register, promote it to a DImode.  */
+/* Promote integer modes smaller than a word to SImode.  */
 #define PROMOTE_MODE(M, UNSIGNEDP, TYPE)	\
   do						\
     {						\
       if (GET_MODE_CLASS (M) == MODE_INT	\
-	  && GET_MODE_SIZE (M) < 8)		\
-	M = DImode;				\
+	  && GET_MODE_SIZE (M) < 4)		\
+	M = SImode;				\
     } while (0)
 
 /* Align argument parameters on the stack to 64-bit, at a minimum.  */
