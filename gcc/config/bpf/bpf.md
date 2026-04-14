@@ -301,7 +301,7 @@
   ""
   "@
    *return bpf_output_move (operands, bpf_has_alu32 ? \"{mov32\t%0,%1|%W0 = %W1}\" : \"{mov\t%0,%1\;and\t%0,0xffffffff|%0 = %1;%0 &= 0xffffffff}\");
-   *return bpf_output_move (operands, \"{ldxw\t%0,%1|%0 = *(u32 *) %1}\");"
+   *return bpf_output_move (operands, \"{ldxw\t%0,%1|%W0 = *(u32 *) %W1}\");"
   [(set_attr "type" "alu,ldx")])
 
 ;;; Sign-extension
