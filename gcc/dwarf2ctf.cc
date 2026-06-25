@@ -476,6 +476,35 @@ gen_ctf_typedef (ctf_container_ref ctfc, dw_die_ref tdef)
 
   dtd = gen_ctf_type (ctfc, tdef_type);
 
+  /* Handle BTF type tags.  Type tags may be attached to a typedef in two
+     ways, both of which insert type tag records into the chain between the
+     typedef and its underlying type:
+      - A btf_type_tag supplied in the typedef definition annotates the
+	underlying type, so the DW_AT_GNU_annotation is found on the DW_AT_type
+	target of the typedef DIE.  These tags are innermost (closest to the
+	underlying type).  A pointer target is skipped here, as pointers
+	consume their own type tags in gen_ctf_pointer_type.
+      - A btf_type_tag supplied on a use of an existing typedef is attached to
+	a cloned typedef DIE (see modified_type_die), so the annotation is
+	found on the typedef DIE itself.  These tags are outermost (closest to
+	the typedef).  */
+  if (btf_debuginfo_p ())
+    {
+      if (tdef_type
+	  && dw_get_die_tag (tdef_type) != DW_TAG_pointer_type)
+	{
+	  dw_die_ref def_annot = get_AT_ref (tdef_type, DW_AT_GNU_annotation);
+	  ctf_dtdef_ref tag_dtd = handle_ctf_type_tags (ctfc, def_annot, dtd);
+	  if (tag_dtd)
+	    dtd = tag_dtd;
+	}
+
+      dw_die_ref use_annot = get_AT_ref (tdef, DW_AT_GNU_annotation);
+      ctf_dtdef_ref tag_dtd = handle_ctf_type_tags (ctfc, use_annot, dtd);
+      if (tag_dtd)
+	dtd = tag_dtd;
+    }
+
   /* Type de-duplication.
      This is necessary because the ctf for the typedef may have been already
      added due to the gen_ctf_type call above.  */

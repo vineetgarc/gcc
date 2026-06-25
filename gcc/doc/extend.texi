@@ -2344,9 +2344,9 @@ when compiled with @option{-gbtf} results in an additional
 associating the string @samp{__user} with the normal @code{BTF_KIND_PTR}
 record for the pointer-to-integer type used in the declaration.
 
-Note that the BTF format currently only has a representation for type
-tags associated with pointer types.  Type tags on non-pointer types
-may be silently skipped when generating BTF.
+Note that when generating BTF, type tags are currently only emitted for
+type tags associated with pointer types and typedefs.  Type tags on
+other types may be silently skipped when generating BTF.
 
 @atindex @code{cleanup}
 @cindex cleanup functions
