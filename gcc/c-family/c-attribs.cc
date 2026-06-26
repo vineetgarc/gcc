@@ -5286,7 +5286,27 @@ handle_btf_type_tag_attribute (tree *node, tree name, tree args,
 	  TREE_TYPE (decl) = *type;
 	}
       else
-	*type = build_variant_type_copy (*type);
+	{
+	  *type = build_variant_type_copy (*type);
+
+	  /* For an already-defined tagged type (struct/union/enum),
+	     decl_attributes would drop the attribute, because
+	     build_type_attribute_qual_variant refuses to attach attributes to a
+	     completed aggregate.  btf_type_tag does not affect type identity,
+	     layout or fields, so attach it directly to the freshly created
+	     variant and prevent the caller from trying (and failing) to add it.
+	     This is needed for a typedef of an existing tagged type, e.g.
+		struct S { ... };
+		typedef struct S __attribute__((btf_type_tag ("t"))) S_t;
+	     (PR125888).  */
+	  if (RECORD_OR_UNION_TYPE_P (*type)
+	      || TREE_CODE (*type) == ENUMERAL_TYPE)
+	    {
+	      TYPE_ATTRIBUTES (*type) = tree_cons (name, args,
+						   TYPE_ATTRIBUTES (*type));
+	      *no_add_attrs = true;
+	    }
+	}
     }
 
   return NULL_TREE;
