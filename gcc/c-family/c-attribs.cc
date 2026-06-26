@@ -5244,6 +5244,29 @@ handle_btf_type_tag_attribute (tree *node, tree name, tree args,
       return NULL_TREE;
     }
 
+  /* A btf_type_tag is a type tag; following clang, it is only meaningful on a
+     pointer type.  On a function it applies to the return type, but only when
+     that return type is a pointer: rebuild the function type with a tagged
+     variant of the pointer return type.  A non-pointer return type (or a
+     METHOD_TYPE) does not carry the tag, which is dropped with a warning.  */
+  if (TREE_CODE (*node) == FUNCTION_TYPE
+      && TREE_CODE (TREE_TYPE (*node)) == POINTER_TYPE)
+    {
+      tree fntype = *node;
+      tree ret = TREE_TYPE (fntype);
+      tree newret
+	= build_type_attribute_variant (ret,
+					tree_cons (name, args,
+						   TYPE_ATTRIBUTES (ret)));
+      tree newfn = build_function_type (newret, TYPE_ARG_TYPES (fntype));
+      /* Preserve any attributes already on the function type itself.  */
+      if (TYPE_ATTRIBUTES (fntype))
+	newfn = build_type_attribute_variant (newfn, TYPE_ATTRIBUTES (fntype));
+      *node = newfn;
+      *no_add_attrs = true;
+      return NULL_TREE;
+    }
+
   if (TREE_CODE (*node) == FUNCTION_TYPE || TREE_CODE (*node) == METHOD_TYPE)
     {
       warning (OPT_Wattributes,

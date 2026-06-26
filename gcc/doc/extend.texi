@@ -2325,6 +2325,10 @@ information is generated, the attribute has no effect.
 The argument is treated as a null-terminated sequence of zero or more
 non-null bytes.  Wide character strings are not supported.
 
+When applied to a function whose return type is a pointer, the attribute
+tags that pointer return type.  On a function with a non-pointer return
+type the attribute has no effect.
+
 The attribute may be supplied multiple times for a single type, in
 which case each distinct argument string will be recorded in a
 separate DIE or BTF record, each associated to the type.  For a single
