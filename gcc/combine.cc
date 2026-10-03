@@ -2004,6 +2004,13 @@ can_combine_p (rtx_insn *insn, rtx_insn *i3, rtx_insn *pred ATTRIBUTE_UNUSED,
 	return false;
       if (succ != 0 && volatile_refs_p (PATTERN (succ)))
 	return false;
+      /* Nor may INSN go straight into an I3 that already reads volatile
+	 memory: the insn would hold both reads with no order between them.
+	 A volatile store in I3 is fine (a read-modify-write is ordered).  */
+      rtx i3set = single_set (i3);
+      if (succ == 0
+	  && volatile_refs_p (i3set ? SET_SRC (i3set) : PATTERN (i3)))
+	return false;
       /* We'll check insns between INSN and I3 below.  */
     }
 
